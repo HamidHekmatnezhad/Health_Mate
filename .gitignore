@@ -1,3 +1,22 @@
+images
+lernen.md
+t1.py
+t2.py
+t3.py
+t4.py
+t5.py
+t6.py
+t7.py
+t8.py
+t9.py
+t10.py
+
+select_sqlite.py
+select_2.py
+*.json
+create_sqlite.py
+insert_sqlite.py
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
