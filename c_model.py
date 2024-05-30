@@ -7,7 +7,7 @@ class FaceRec:
 
     def __init__(self, model_loc='hog', model_encode='small', num_jitters=1):
         """
-        model_loc: can be 'hog' or 'cnn'
+        model_loc: 'hog' or 'cnn'
         num_jitters: How many times to re-sample the face when calculating encoding. Higher is more accurate, but slower (i.e. 100 is 100x slower)
         model_encode: Optional - which model to use. “large” or “small” (default) which only returns 5 points but is faster.
         """
@@ -20,42 +20,43 @@ class FaceRec:
 
     def collect_data(self, img, person_id):
         """
-        one person must be in a photo.
+        one person in a photo.
 
-        img: must a numpy array,
-        person_id: must be a integer,
+        img: numpy array,
+        person_id: int,
         """
 
         loc = face_recognition.face_locations(img, model=self.model_loc)
-        encode = face_recognition.face_encodings(face_image=img, known_face_locations=[loc], num_jitters=self.num_jitters, model=self.model_encode)
+        encode = face_recognition.face_encodings(face_image=img, known_face_locations=loc, num_jitters=self.num_jitters, model=self.model_encode)[0]
 
         check = self.insert_data(encode=encode, person_id=person_id)
         if check:
-            print('Data Inserted')
+            return True # 'Data Inserted'
         else:
-            print('Data Not Inserted, have a problem')
+            return False # 'Data Not Inserted, have a problem'
 
     def insert_data(self, encode, person_id):
         """ insert face id with code id in to database."""
-        try: 
-            temp = [float(x) for x in encode]
-            temp_str = str()
+         
+        temp = []
+        for x in encode:
+            temp.append(float(x))
 
-            for s in temp:
-                temp_str += str(s) + ', '
+        temp_str = str()
 
-            con = sqlite3.connect('db/faceid.db')
-            cur = con.cursor()
-            cur.execute("INSERT INTO faceid (code_id, face_code) VALUES (?, ?)", (person_id, temp_str))
-            con.commit()
-            con.close()
-            return True
-        
-        except:
-            return False
-        
+        for s in temp:
+            temp_str += str(s) + ', '
+
+        con = sqlite3.connect('db/faceid.db')
+        cur = con.cursor()
+        cur.execute("INSERT INTO person (code_id, face_code) VALUES (?, ?)", (person_id, temp_str))
+        con.commit()
+        con.close()
+        return True
+              
     def get_data(self):
         """get data from database."""
+        
         con = sqlite3.connect('db/faceid.db')
         cur = con.cursor()
 
@@ -99,7 +100,7 @@ class FaceRec:
                         result = i
 
             if req_loc:
-                return self.id_data[result], loc
+                return self.id_data[result], loc, temp
             else:
                 return self.id_data[result]
             
@@ -117,6 +118,22 @@ class FaceRec:
 
         return record[0][0], record[0][1]
 
+    def check_data(self, person_id):
+        """person_id: id
+        check in Database"""
+        person_id = int(person_id)
+        con = sqlite3.connect('db/faceid.db')
+        cur = con.cursor()
+
+        cur.execute("SELECT code_id FROM person WHERE code_id = ?", (person_id,))
+        record = cur.fetchone()
+        cur.close()
+        con.close()
+
+        if record == None:
+            return True
+        else:
+            return False
 
 
 
