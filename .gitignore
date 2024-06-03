@@ -1,13 +1,12 @@
 images
 lernen.md
 tested
-
-
 select_sqlite.py
 select_2.py
 *.json
 create_sqlite.py
 insert_sqlite.py
+diagram
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
