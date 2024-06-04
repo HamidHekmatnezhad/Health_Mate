@@ -35,7 +35,7 @@ elif option == 'input data':
         img = Image.open(pic)
         img_array = np.array(img)
 
-        check = app.collect_data(img_array, id_p)
+        check = app.write_data(img_array, id_p)
         
         if check:
             st.success('Data inserted, done!')
@@ -54,11 +54,11 @@ elif option == 'output':
         img_array = np.array(img)
 
         app = FaceRec()
-        app.get_data()
-        id_p = app.recognize_face(img_array, req_loc=True)
+        app.raed_face_id_data()
+        id, loc, dist = app.recognize_face(img_array, req_loc=True)
 
         st.write(f'## recognized') 
-        st.write(f'### id: {id_p}')
+        st.write(f'### id: {id}')
 
         
 

@@ -1,7 +1,8 @@
 import face_recognition
 import numpy as np
 import face_recognition_models
-import sqlite3
+import sql_infos
+import mysql.connector as DB
 
 class FaceRec:
 
@@ -18,49 +19,84 @@ class FaceRec:
         self.model_encode = model_encode # 'small' or 'large'
         self.num_jitters = num_jitters # 1 to 100 ...
 
-    def collect_data(self, img, person_id):
+        self.HOSTNAME = sql_infos.HOSTNAME
+        self.USER = sql_infos.USER
+        self.PASSWORD = sql_infos.PASSWORD
+        self.DATABASE = "sql_personal_data"
+
+    def write_data(self, img, codeid: int, fname=None, lname=None, birth_date=None, gender=None):
         """
+        insert face id with code id in to database and ...
         one person in a photo.
 
         img: numpy array,
-        person_id: int,
+        codeid: int,
         """
+        try: 
+            loc = face_recognition.face_locations(img, model=self.model_loc)
+            encode = face_recognition.face_encodings(face_image=img, known_face_locations=loc, num_jitters=self.num_jitters, model=self.model_encode)[0]
 
-        loc = face_recognition.face_locations(img, model=self.model_loc)
-        encode = face_recognition.face_encodings(face_image=img, known_face_locations=loc, num_jitters=self.num_jitters, model=self.model_encode)[0]
+            temp = []
+            for x in encode:
+                temp.append(float(x))
 
-        check = self.insert_data(encode=encode, person_id=person_id)
-        if check:
-            return True # 'Data Inserted'
-        else:
-            return False # 'Data Not Inserted, have a problem'
+            temp_str = str()
 
-    def insert_data(self, encode, person_id):
-        """ insert face id with code id in to database."""
-         
-        temp = []
-        for x in encode:
-            temp.append(float(x))
+            for s in temp:
+                temp_str += str(s) + ', '
 
-        temp_str = str()
+            sql_item = 'codeid, face_id'
+            sql_value = f'{codeid}, "{temp_str}"'
 
-        for s in temp:
-            temp_str += str(s) + ', '
+            if fname:
+                sql_item += ', first_name'
+                sql_value += f', "{fname}"'
 
-        con = sqlite3.connect('db/faceid.db')
-        cur = con.cursor()
-        cur.execute("INSERT INTO person (code_id, face_code) VALUES (?, ?)", (person_id, temp_str))
-        con.commit()
-        con.close()
-        return True
-              
-    def get_data(self):
-        """get data from database."""
+            if lname:
+                sql_item += ', last_name'
+                sql_value += f', "{lname}"'
+
+            if birth_date:
+                sql_item += ', birth_date'
+                sql_value += f', "{birth_date}"'
+
+            if gender:
+                sql_item += ', gender'
+                sql_value += f', "{gender}"'
+
+            con = DB.connect(
+                        host=self.HOSTNAME,
+                        user=self.USER,
+                        password=self.PASSWORD,
+                        database=self.DATABASE
+                            )
+            
+            cur = con.cursor()
+            cur.execute(f'INSERT INTO personal_data ({sql_item}) VALUES ({sql_value})')
+            con.commit()
+            cur.close()
+            con.close()
+            return True
         
-        con = sqlite3.connect('db/faceid.db')
+        except:
+            print('Error in write_data')
+            return False
+              
+    def raed_face_id_data(self): # read_data
+        """read face id from database."""
+        
+        self.id_data.clear()
+        self.face_data.clear()
+
+        con = DB.connect(
+                    host=self.HOSTNAME,
+                    user=self.USER,
+                    password=self.PASSWORD,
+                    database=self.DATABASE
+                        )
         cur = con.cursor()
 
-        cur.execute("SELECT person_id, face_code FROM person")
+        cur.execute("SELECT client_id, face_id FROM personal_data")
         records = cur.fetchall()
         cur.close()
         con.close()
@@ -77,10 +113,11 @@ class FaceRec:
             self.id_data.append(p_id)
             self.face_data.append(face_id)
 
-    def recognize_face(self, img, req_loc=False):
+    def recognize_face(self, img):
         """img: numpy array
-        return: id person
-        return: if req_loc == True return id person and location of face in image"""
+        return: id, loc, temp
+        temp -> distance
+        """
 
         loc = face_recognition.face_locations(img, model=self.model_loc)
 
@@ -99,16 +136,19 @@ class FaceRec:
                         temp = dist[i]
                         result = i
 
-            if req_loc:
-                return self.id_data[result], loc, temp
-            else:
-                return self.id_data[result]
+            return self.id_data[result], loc, temp
             
     def query(self, id):
-        """for test
-        return; id, code_id person"""
+        """
+        for test
+        """
 
-        con = sqlite3.connect('db/faceid.db')
+        con = DB.connect(
+                    host=self.HOSTNAME,
+                    user=self.USER,
+                    password=self.PASSWORD,
+                    database=self.DATABASE
+                        )
         cur = con.cursor()
 
         cur.execute("SELECT person_id, code_id FROM person WHERE person_id = ?", (id,))
@@ -118,14 +158,23 @@ class FaceRec:
 
         return record[0][0], record[0][1]
 
-    def check_data(self, person_id):
-        """person_id: id
-        check in Database"""
-        person_id = int(person_id)
-        con = sqlite3.connect('db/faceid.db')
+    def check_data(self, codeid):
+        """codeid: id
+        check in Database
+        return: True, False
+        True -> id is NOT in Database
+        False -> id is in Database"""
+
+        con = DB.connect(
+                    host=self.HOSTNAME,
+                    user=self.USER,
+                    password=self.PASSWORD,
+                    database=self.DATABASE
+                        )
+        
         cur = con.cursor()
 
-        cur.execute("SELECT code_id FROM person WHERE code_id = ?", (person_id,))
+        cur.execute("SELECT codeid FROM personal_data WHERE codeid = ?", (codeid,))
         record = cur.fetchone()
         cur.close()
         con.close()
