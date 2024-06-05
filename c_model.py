@@ -82,11 +82,8 @@ class FaceRec:
             print('Error in write_data')
             return False
               
-    def raed_face_id_data(self): 
+    def update_faces_ids(self): 
         """read face id from database."""
-        
-        self.id_data.clear()
-        self.face_data.clear()
 
         con = DB.connect(
                     host=self.HOSTNAME,
@@ -100,6 +97,9 @@ class FaceRec:
         records = cur.fetchall()
         cur.close()
         con.close()
+
+        self.id_data.clear()
+        self.face_data.clear()
 
         for record in records:
 
@@ -129,14 +129,18 @@ class FaceRec:
             dist = face_recognition.face_distance(self.face_data, encode)
 
             temp = 1
+            check_exist = False
 
             for i in range(len(isSame)):
                 if isSame[i]:
+                    check_exist = True
                     if dist[i] < temp:
                         temp = dist[i]
                         result = i
-
-            return self.id_data[result], loc, temp
+            if check_exist:
+                return self.id_data[result], loc, temp
+            else: 
+                return None, None, None
 
     def check_flag(self): 
         """
@@ -172,31 +176,56 @@ class FaceRec:
 
     def write_health_record(self, id, record):
             """submit buttom"""
+            try:
+                con = DB.connect(
+                        host=self.HOSTNAME,
+                        user=self.USER,
+                        password=self.PASSWORD,
+                        database=self.DATABASE
+                            )
+            
+                cur = con.cursor()
 
-            con = DB.connect(
+                cur.execute(f'INSERT INTO health_record (client_id, heartbeat, oxygen, weight_kg, temperature, date_added) VALUES ({id}, {record[1]}, {record[2]}, {record[3]}, {record[4]}, NOW());')
+                con.commit()
+
+                cur.execute(f'DELETE FROM row_hd WHERE r_id = {record[0]};')
+                con.commit()
+
+                # cur.execute('DELETE FROM control_send ORDER BY f_id DESC LIMIT 1;') # 2
+
+                cur.execute(f'INSERT INTO control_send (flag) VALUES (1);')
+                con.commit()
+
+                cur.close()
+                con.close()
+                return True
+            
+            except:
+                return False
+
+    def query_one_client_info(self, id):
+        """
+        querry data from personal_data all record for one client
+        """
+
+        con = DB.connect(
                     host=self.HOSTNAME,
                     user=self.USER,
                     password=self.PASSWORD,
                     database=self.DATABASE
                         )
         
-            cur = con.cursor()
+        cur = con.cursor()
 
-            cur.execute(f'INSERT INTO health_record (client_id, heartbeat, oxygen, weight_kg, temperature, date_added) VALUES ({id}, {record[1]}, {record[2]}, {record[3]}, {record[4]}, NOW());')
-            con.commit()
+        cur.execute(f"SELECT * FROM personal_data WHERE client_id = {id}")
+        records = cur.fetchone()
+        cur.close()
+        con.close()
 
-            cur.execute(f'DELETE FROM row_hd WHERE r_id = {record[0]};')
-            con.commit()
+        return records
 
-            # cur.execute('DELETE FROM control_send ORDER BY f_id DESC LIMIT 1;') # 2
-
-            cur.execute(f'INSERT INTO control_send (flag) VALUES (1);')
-            con.commit()
-
-            cur.close()
-            con.close()
-
-    def query_one_client(self, id): 
+    def query_one_client_hr(self, id): 
         """
         querry data from health_record all record for one client
         """
@@ -210,7 +239,7 @@ class FaceRec:
         
         cur = con.cursor()
 
-        cur.execute("SELECT * FROM health_record WHERE client_id = ?", (id,))
+        cur.execute(f"SELECT * FROM health_record WHERE client_id = {id}")
         records = cur.fetchall()
         cur.close()
         con.close()
@@ -233,7 +262,7 @@ class FaceRec:
         
         cur = con.cursor()
 
-        cur.execute("SELECT codeid FROM personal_data WHERE codeid = ?", (codeid,))
+        cur.execute(f"SELECT client_id FROM personal_data WHERE codeid = {codeid}")
         record = cur.fetchone()
         cur.close()
         con.close()
@@ -243,5 +272,59 @@ class FaceRec:
         else:
             return False
 
+    def read_id(self, codeid):
+        """read client_id from Database"""
+
+        con = DB.connect(
+                    host=self.HOSTNAME,
+                    user=self.USER,
+                    password=self.PASSWORD,
+                    database=self.DATABASE
+                        )
+        
+        cur = con.cursor()
+
+        cur.execute(f"SELECT client_id FROM personal_data WHERE codeid = {codeid}")
+        record = cur.fetchone()
+        cur.close()
+        con.close()
+
+        return record
+
+    def edit_data(self, id, codeid, fname, lname, birth_date, gender):
+        """update data from personal_data"""
+        try:
+            sql = ''
+
+            if (codeid != None) or (codeid != ''):
+                sql += f'codeid = {codeid},'
+            if (fname != None) or (fname != ''):
+                sql += f'fname = "{fname}",'
+            if (lname != None) or (lname != ''):
+                sql += f'lname = "{lname}",'
+            if (birth_date != None) or (birth_date != ''):
+                sql += f'birth_date = "{birth_date}",'
+            if (gender != None) or (gender != ''):
+                sql += f'gender = "{gender}",'
+            
+            sql = sql[:-1]
+
+            con = DB.connect(
+                        host=self.HOSTNAME,
+                        user=self.USER,
+                        password=self.PASSWORD,
+                        database=self.DATABASE
+                            )
+            
+            cur = con.cursor()
+
+            cur.execute(f'UPDATE personal_data SET {sql} WHERE client_id = {id}')
+            con.commit()
+            cur.close()
+            con.close()
+            return True
+        
+        except:
+            return False
 
 
