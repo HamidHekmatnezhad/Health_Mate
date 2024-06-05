@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS personal_data (
 );
 
 CREATE TABLE IF NOT EXISTS health_record (
-    id_hr INT NOT NULL PRIMARY KEY,
+    id_hr INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     client_id INT NOT NULL,
     hearthbeat SMALLINT,
     oxygen INT,
@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS health_record (
 );
 
 CREATE TABLE IF NOT EXISTS row_hd (
+    r_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     hearthbeat SMALLINT,
     oxygen INT,
     weight_kg DECIMAL(5,2),
@@ -33,5 +34,6 @@ CREATE TABLE IF NOT EXISTS row_hd (
 );
 
 CREATE TABLE IF NOT EXISTS control_send (
+    f_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     flag BOOLEAN
 )

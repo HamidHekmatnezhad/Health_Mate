@@ -8,6 +8,7 @@ create_sqlite.py
 insert_sqlite.py
 diagram
 sql_infos.py
+c.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

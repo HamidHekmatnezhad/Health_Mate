@@ -45,8 +45,8 @@ class FaceRec:
             for s in temp:
                 temp_str += str(s) + ', '
 
-            sql_item = 'codeid, face_id'
-            sql_value = f'{codeid}, "{temp_str}"'
+            sql_item = 'codeid, face_id, date_added'
+            sql_value = f'{codeid}, "{temp_str}", NOW()'
 
             if fname:
                 sql_item += ', first_name'
@@ -82,7 +82,7 @@ class FaceRec:
             print('Error in write_data')
             return False
               
-    def raed_face_id_data(self): # read_data
+    def raed_face_id_data(self): 
         """read face id from database."""
         
         self.id_data.clear()
@@ -137,10 +137,11 @@ class FaceRec:
                         result = i
 
             return self.id_data[result], loc, temp
-            
-    def query(self, id):
+
+    def check_flag(self): 
         """
-        for test
+        check flag
+        return: record
         """
 
         con = DB.connect(
@@ -149,14 +150,72 @@ class FaceRec:
                     password=self.PASSWORD,
                     database=self.DATABASE
                         )
+        
         cur = con.cursor()
 
-        cur.execute("SELECT person_id, code_id FROM person WHERE person_id = ?", (id,))
-        record = cur.fetchall()
+        # read FLAG
+        cur.execute(f'SELECT * FROM control_send ORDER BY f_id DESC LIMIT 1;')
+        flag = cur.fetchone()
+
+        if flag[1] == 0:
+            cur.execute(f'SELECT * FROM row_hd ORDER BY r_id DESC LIMIT 1;')
+            record = cur.fetchone()
+            if record[1] and record[2] and record[3] and record[4]:
+                cur.close()
+                con.close()
+                return record
+
+        else:
+            cur.close()
+            con.close()
+            return None
+
+    def write_health_record(self, id, record):
+            """submit buttom"""
+
+            con = DB.connect(
+                    host=self.HOSTNAME,
+                    user=self.USER,
+                    password=self.PASSWORD,
+                    database=self.DATABASE
+                        )
+        
+            cur = con.cursor()
+
+            cur.execute(f'INSERT INTO health_record (client_id, heartbeat, oxygen, weight_kg, temperature, date_added) VALUES ({id}, {record[1]}, {record[2]}, {record[3]}, {record[4]}, NOW());')
+            con.commit()
+
+            cur.execute(f'DELETE FROM row_hd WHERE r_id = {record[0]};')
+            con.commit()
+
+            # cur.execute('DELETE FROM control_send ORDER BY f_id DESC LIMIT 1;') # 2
+
+            cur.execute(f'INSERT INTO control_send (flag) VALUES (1);')
+            con.commit()
+
+            cur.close()
+            con.close()
+
+    def query_one_client(self, id): 
+        """
+        querry data from health_record all record for one client
+        """
+
+        con = DB.connect(
+                    host=self.HOSTNAME,
+                    user=self.USER,
+                    password=self.PASSWORD,
+                    database=self.DATABASE
+                        )
+        
+        cur = con.cursor()
+
+        cur.execute("SELECT * FROM health_record WHERE client_id = ?", (id,))
+        records = cur.fetchall()
         cur.close()
         con.close()
 
-        return record[0][0], record[0][1]
+        return records
 
     def check_data(self, codeid):
         """codeid: id
