@@ -39,7 +39,6 @@ class FaceRec:
             temp = []
             for x in encode:
                 temp.append(float(x))
-
             temp_str = str()
 
             for s in temp:
@@ -140,7 +139,9 @@ class FaceRec:
             if check_exist:
                 return self.id_data[result], loc, temp
             else: 
-                return None, None, None
+                return False, False, False
+        else:
+            return False, False, False
 
     def check_flag(self): 
         """
@@ -161,6 +162,7 @@ class FaceRec:
         cur.execute(f'SELECT * FROM control_send ORDER BY f_id DESC LIMIT 1;')
         flag = cur.fetchone()
 
+        # read row data
         if flag[1] == 0:
             cur.execute(f'SELECT * FROM row_hd ORDER BY r_id DESC LIMIT 1;')
             record = cur.fetchone()
@@ -186,7 +188,7 @@ class FaceRec:
             
                 cur = con.cursor()
 
-                cur.execute(f'INSERT INTO health_record (client_id, heartbeat, oxygen, weight_kg, temperature, date_added) VALUES ({id}, {record[1]}, {record[2]}, {record[3]}, {record[4]}, NOW());')
+                cur.execute(f'INSERT INTO health_record (client_id, hearthbeat, oxygen, weight_kg, temperature, date_added) VALUES ({id}, {record[1]}, {record[2]}, {record[3]}, {record[4]}, NOW());')
                 con.commit()
 
                 cur.execute(f'DELETE FROM row_hd WHERE r_id = {record[0]};')
@@ -288,26 +290,28 @@ class FaceRec:
         record = cur.fetchone()
         cur.close()
         con.close()
-
-        return record
+        if record == None:
+            return False
+        else:
+            return record[0]
 
     def edit_data(self, id, codeid, fname, lname, birth_date, gender):
-        """update data from personal_data"""
-        try:
+            """update data from personal_data"""
+        # try:
             sql = ''
 
-            if (codeid != None) or (codeid != ''):
-                sql += f'codeid = {codeid},'
-            if (fname != None) or (fname != ''):
-                sql += f'fname = "{fname}",'
-            if (lname != None) or (lname != ''):
-                sql += f'lname = "{lname}",'
-            if (birth_date != None) or (birth_date != ''):
-                sql += f'birth_date = "{birth_date}",'
-            if (gender != None) or (gender != ''):
-                sql += f'gender = "{gender}",'
+            if (codeid != None):
+                sql += f' codeid={codeid},'
+            if (fname != None):
+                sql += f' first_name="{fname}",'
+            if (lname != None):
+                sql += f' last_name="{lname}",'
+            if (birth_date != None):
+                sql += f' birth_date="{birth_date}",'
+            if (gender != None):
+                sql += f' gender="{gender}",'
             
-            sql = sql[:-1]
+            sql = sql[:-1] 
 
             con = DB.connect(
                         host=self.HOSTNAME,
@@ -324,7 +328,7 @@ class FaceRec:
             con.close()
             return True
         
-        except:
-            return False
+        # except:
+        #     return False
 
 

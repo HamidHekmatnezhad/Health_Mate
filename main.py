@@ -6,11 +6,14 @@ import pandas as pd
 import numpy as np
 from PIL import Image
 import face_recognition
+import random
+import matplotlib.pyplot as plt
+
 
 #                   0         1             2              3            4            5
 list_of_tasks = ['Help','Enrollment', 'Health Mate', 'Show Record', 'Settings', 'Edit Info']
 option = list_of_tasks[0]
-check_run = ''
+check_run, id, app = False, False, False
 heartbeat = []
 oxygen = []
 weight_kg = []
@@ -20,21 +23,27 @@ date_added = []
 def edit_info_data():
 
     app, id, check_run = entry_optional()
-
+    check_update = 0
+    id_p = '0'
     if check_run:
         info = app.query_one_client_info(id)
-        id_p = st.text_input(label='ID', help='please enter id. example= 1234567890', placeholder=str(info[1]))
+        
+        df = pd.DataFrame({'ID': [info[1]], 'First Name': [info[2]], 'Last Name': [info[3]], 'Gender': [info[6]], 'Birth Date': [info[5]]})
+        st.dataframe(df, hide_index=True, use_container_width=True)
+        inx = ["None", "Male", "Female"]
+        xx = inx.index(info[6])
+
+        id_p = st.number_input(label='ID', help='please enter id. example= 1234567890', value=info[1])
         col = []
         col = st.columns(2)
-        fname = col[0].text_input(label='First Name', placeholder=info[2])
-        lname = col[1].text_input(label='Last Name', placeholder=info[3])
+        fname = col[0].text_input(label='First Name', value=info[2])
+        lname = col[1].text_input(label='Last Name', value=info[3])
         col2 = st.columns(2)
-        gender = col2[0].selectbox('Gedner', {info[6], 'None', 'Male', 'Female'})
+        gender = col2[0].selectbox('Gedner', ['None', 'Male', 'Female'], index=xx)
         birth_date = col2[1].date_input("Your Birthday", value=info[5], min_value=datetime.datetime(1900, 1, 1))
+        
 
-        subcheck = st.button(label="Submit", type="primary", use_container_width=True)
-
-        if (int(id_p) == info[1]) or (id_p == ''):
+        if (id_p == info[1]) or (id_p == ''):
             id_p = None
         if (gender == 'None') or (gender == info[6]):
             gender = None
@@ -44,16 +53,19 @@ def edit_info_data():
             lname = None
         if (birth_date == info[5]) or (birth_date == ''):
             birth_date = None
+    
+            subcheck = st.button(label="Submit", type="primary", use_container_width=True)
+            if subcheck:
+                check_update = app.edit_data(id, id_p, fname, lname, birth_date, gender)
 
-        check_update = app.edit_data(id, int(id_p), fname, lname, birth_date, gender)
+            if check_update:
+                st.success('### Successfully Updated')
+                st.balloons()
+            else:
+                if (type(check_update) == bool):
+                    st.error('### Failed to Update')
 
-        if check_update:
-            st.success('### Successfully Updated')
-            st.balloons()
-        else:
-            st.error('### Failed to Update')
-
-    elif (check_run == False):
+    elif (check_run == False) and (id == 0):
         st.error('### NOT Found')
 
 def print_infos(info_data):
@@ -69,17 +81,11 @@ def print_infos(info_data):
     date_added = info_data[7]
 
     df = pd.DataFrame({'ID': [codeid], 'First Name': [first_name], 'Last Name': [last_name], 'Gender': [gender], 'Birth Date': [birth_date], 'Date Added': [date_added]})
-    st.dataframe(df)
+    st.dataframe(df, hide_index=True, use_container_width=True)
     
-    st.write(f'''
-            |ID*|First Name|Last Name|Birth Date|Gender|Date Added|
-            |--|--|--|--|--|--|
-            |{str(codeid)}|{first_name}|{last_name}|{str(birth_date)}|{gender}|{str(date_added)}|
-             ''')
-
 def print_hr(hr_data):
     if len(hr_data) == 0:
-        st.write('no Health Record')
+        st.write('## no Health Record')
 
     elif len(hr_data) != 0:
         heartbeat.clear()
@@ -94,25 +100,49 @@ def print_hr(hr_data):
             weight_kg.append(record[4])
             temperature.append(record[5])
             date_added.append(record[6])
-        
+
+        import numpy as np
         df = pd.DataFrame({'Heartbeat': heartbeat, 'Oxygen': oxygen, 'Weight (kg)': weight_kg, 'Temperature': temperature, 'Date Added': date_added})
-        st.dataframe(df)
+        st.dataframe(df, use_container_width=True)
+
+        for t in range(len(temperature)):
+            weight_kg[t] = int(weight_kg[t])
+            temperature[t] = int(temperature[t])
+        df = pd.DataFrame({'Heartbeat': heartbeat, 'Oxygen': oxygen, 'Weight (kg)': weight_kg, 'Temperature': temperature, 'Date Added': date_added, "col3": ["A", "B", "C", "D", "E"], "Time": [0,1,2,3,4], "e": "A"})
+        st.line_chart(df,  y=['Heartbeat', 'Oxygen', 'Weight (kg)', 'Temperature'])
+        
+        list_style = ['default', 'bmh', 'dark_background', 'Solarize_Light2', 'grayscale', 'seaborn-pastel', 'classic']
+        col = st.columns(2)
+        style_s = col[0].selectbox('Select a style', list_style, index=0)
+        plt.style.use(style_s)
+        plt.grid(False)
+        fig, axs = plt.subplots(1)
+        fig.suptitle('Health Record')
+        axs.tick_params(axis='x',which='both',bottom=False,top=False,labelbottom=False)
+
+        axs.plot([x for x in range(len(heartbeat))], heartbeat, label='Heartbeat', linestyle='--')
+        axs.plot([x for x in range(len(heartbeat))], oxygen, label='Oxygen', linestyle='-.')
+        axs.plot([x for x in range(len(heartbeat))], weight_kg, label='Weight (kg)', linestyle=':')
+        axs.plot([x for x in range(len(heartbeat))], temperature, label='Temperature', linestyle='-')
+        axs.legend(loc='upper left')
+        st.pyplot(fig)
+
+        
 
 def entry_optional():
     global check_run
+    id = 0
     app = FaceRec()
     switch = st.radio('Switch: ', ['Picture', 'ID'])
 
     if switch == 'ID':
-        id = st.text_input(label='ID', help='please enter id. example= 1234567890', placeholder='*1234567890')
-        btn = st.button(label="Submit", type="primary")
-        if btn or id:
-            id = int(id)
+        id = st.number_input(label='ID', help='please enter id. example= 1234567890', value=0)
+        # btn = st.button(label="Submit", type="primary")
+        if id:
             id = app.read_id(id)
             check_id = app.check_data(id)
             if check_id:
                 check_run = False
-                st.error('### id is not exist')
             else:
                 check_run = True
 
@@ -126,19 +156,19 @@ def entry_optional():
             app.update_faces_ids()
             id, loc, dist = app.recognize_face(img_array)
     
-            if (id == None):
-                return app, id, False
-                st.error('### face NOT found!!!')
-            
-            else: 
-                return app, id, True
+    if (id != 0):
+        return app, id, True
+    
+    else:
+        if (id == False):
+            return app, 0, False
 
 def page_help():
     st.write('in ***development***...')
     
 def page_enrollment():
 
-    id_p = st.text_input(label='ID', help='please enter id. example= 1234567890', placeholder='*1234567890')
+    id_p = st.number_input(label='ID', help='please enter id. example= 1234567890', value=0)
     col = []
     col = st.columns(2)
     fname = col[0].text_input(label='First Name', placeholder='hamid')
@@ -147,7 +177,7 @@ def page_enrollment():
     gender = col2[0].selectbox('Gedner', ['None', 'Male', 'Female'], )
     birth_date = col2[1].date_input("Your Birthday", value=None, min_value=datetime.datetime(1900, 1, 1))
 
-    subcheck = st.button(label="Submit", type="primary", use_container_width=True)
+    # subcheck = st.button(label="Submit", type="primary", use_container_width=True)
 
     if gender == 'None':
         gender = None
@@ -156,13 +186,10 @@ def page_enrollment():
     if lname == '':
         lname = None
 
-    if subcheck and id_p:
-
-        st.write(f'''
-             |ID*|first name|last name|Gender|Birth Date|
-             |---|---|---|---|---|
-             |{id_p}|{fname}|{lname}|{gender}|{birth_date}|
-             ''')
+    if id_p:
+        
+        df = pd.DataFrame({'ID': [id_p], 'First Name': [fname], 'Last Name': [lname], 'Gender': [gender], 'Birth Date': [birth_date]})
+        st.dataframe(df, hide_index=True, use_container_width=True)
         
         app = FaceRec()
         check = app.check_data(int(id_p))
@@ -177,7 +204,7 @@ def page_enrollment():
                     img = Image.open(pic)
                     img_array = np.array(img)
 
-                    check = app.write_data(img_array, int(id_p), fname, lname, birth_date, gender)
+                    check = app.write_data(img_array, id_p, fname, lname, birth_date, gender)
         
                     if check:
                         st.success('Data inserted, done!')
@@ -210,7 +237,7 @@ def page_health_mate():
             st.balloons()
 
             df = pd.DataFrame({'Heartbeat': [hr[1]], 'Oxygen': [hr[2]], 'Weight (KG)': [hr[3]], 'Temperature': [hr[4]]})
-            st.dataframe(df)
+            st.dataframe(df, use_container_width=True)
             check_run = ''
             
         elif ((type(check_hr) == bool) and (check_hr == False)):
