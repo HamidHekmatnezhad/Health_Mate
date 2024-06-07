@@ -194,11 +194,6 @@ class FaceRec:
                 cur.execute(f'DELETE FROM row_hd WHERE r_id = {record[0]};')
                 con.commit()
 
-                # cur.execute('DELETE FROM control_send ORDER BY f_id DESC LIMIT 1;') # 2
-
-                cur.execute(f'INSERT INTO control_send (flag) VALUES (1);')
-                con.commit()
-
                 cur.close()
                 con.close()
                 return True
@@ -331,4 +326,23 @@ class FaceRec:
         # except:
         #     return False
 
+    def set_flag(self, flag):
+        """"""
+        try:
+            con = DB.connect(
+                            host=self.HOSTNAME,
+                            user=self.USER,
+                            password=self.PASSWORD,
+                            database=self.DATABASE
+                                )
+                
+            cur = con.cursor()
 
+            cur.execute(f'INSERT INTO control_send (flag) VALUES ({flag});')
+            con.commit()
+            cur.close()
+            con.close()
+            return True
+            
+        except:
+            return False

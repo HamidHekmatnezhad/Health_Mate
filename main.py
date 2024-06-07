@@ -127,8 +127,6 @@ def print_hr(hr_data):
         axs.legend(loc='upper left')
         st.pyplot(fig)
 
-        
-
 def entry_optional():
     global check_run
     id = 0
@@ -221,23 +219,24 @@ def page_health_mate():
     app, id, check_run = entry_optional()
 
     if check_run:
+        ch = app.set_flag(1)    
         info_data = app.query_one_client_info(id)
         print_infos(info_data)
 
         cid = info_data[0]
-        while True:
+        while ch:
             hr = app.check_flag()
             if hr != None:
                 break
-
-        check_hr = app.write_health_record(cid, hr)
+        if ch:
+            check_hr = app.write_health_record(cid, hr)
         
         if check_hr and (type(check_hr) == bool):
             st.success('Data inserted, done!')
             st.balloons()
 
             df = pd.DataFrame({'Heartbeat': [hr[1]], 'Oxygen': [hr[2]], 'Weight (KG)': [hr[3]], 'Temperature': [hr[4]]})
-            st.dataframe(df, use_container_width=True)
+            st.dataframe(df, use_container_width=True, hide_index=True)
             check_run = ''
             
         elif ((type(check_hr) == bool) and (check_hr == False)):
