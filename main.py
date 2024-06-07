@@ -111,7 +111,7 @@ def print_hr(hr_data):
         df = pd.DataFrame({'Heartbeat': heartbeat, 'Oxygen': oxygen, 'Weight (kg)': weight_kg, 'Temperature': temperature, 'Date Added': date_added, "col3": ["A", "B", "C", "D", "E"], "Time": [0,1,2,3,4], "e": "A"})
         st.line_chart(df,  y=['Heartbeat', 'Oxygen', 'Weight (kg)', 'Temperature'])
         
-        list_style = ['default', 'bmh', 'dark_background', 'Solarize_Light2', 'grayscale', 'seaborn-pastel', 'classic']
+        list_style = ['default', 'bmh', 'dark_background', 'Solarize_Light2', 'grayscale', 'classic']
         col = st.columns(2)
         style_s = col[0].selectbox('Select a style', list_style, index=0)
         plt.style.use(style_s)
