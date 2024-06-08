@@ -225,10 +225,11 @@ def page_health_mate():
         print_infos(info_data)
 
         cid = info_data[0]
-        while ch:
-            hr = app.check_flag()
-            if hr != None:
-                break
+        with st.spinner('### Wait for DATA...'):
+            while ch:
+                hr = app.check_flag()
+                if hr != None:
+                    break
         if ch:
             check_hr = app.write_health_record(cid, hr)
         
