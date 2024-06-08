@@ -80,7 +80,7 @@ def print_infos(info_data):
     birth_date = info_data[6]
     date_added = info_data[7]
 
-    df = pd.DataFrame({'ID': [codeid], 'First Name': [first_name], 'Last Name': [last_name], 'Gender': [gender], 'Birth Date': [birth_date], 'Date Added': [date_added]})
+    df = pd.DataFrame({'ID': [codeid], 'First Name': [first_name], 'Last Name': [last_name], 'Gender': [birth_date], 'Birth Date': [gender], 'Date Added': [date_added]}) # wtf, gender and birth_date is awesome!!!
     st.dataframe(df, hide_index=True, use_container_width=True)
     
 def print_hr(hr_data):
@@ -108,7 +108,8 @@ def print_hr(hr_data):
         for t in range(len(temperature)):
             weight_kg[t] = int(weight_kg[t])
             temperature[t] = int(temperature[t])
-        df = pd.DataFrame({'Heartbeat': heartbeat, 'Oxygen': oxygen, 'Weight (kg)': weight_kg, 'Temperature': temperature, 'Date Added': date_added, "col3": ["A", "B", "C", "D", "E"], "Time": [0,1,2,3,4], "e": "A"})
+        
+        df = pd.DataFrame({'Heartbeat': heartbeat, 'Oxygen': oxygen, 'Weight (kg)': weight_kg, 'Temperature': temperature, 'Date Added': date_added})
         st.line_chart(df,  y=['Heartbeat', 'Oxygen', 'Weight (kg)', 'Temperature'])
         
         list_style = ['default', 'bmh', 'dark_background', 'Solarize_Light2', 'grayscale', 'classic']
