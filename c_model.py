@@ -164,9 +164,11 @@ class FaceRec:
 
         # read row data
         if flag[1] == 0:
-            cur.execute(f'SELECT * FROM row_hd ORDER BY r_id DESC LIMIT 1;')
+            # chenged row_hd  to log
+            cur.execute(f'SELECT * FROM log ORDER BY id DESC LIMIT 1;')
             record = cur.fetchone()
-            if record[1] and record[2] and record[3] and record[4]:
+            # if record[1] and record[2] and record[3] and record[4]:
+            if record:
                 cur.close()
                 con.close()
                 return record
@@ -187,8 +189,10 @@ class FaceRec:
                             )
             
                 cur = con.cursor()
-
-                cur.execute(f'INSERT INTO health_record (client_id, hearthbeat, oxygen, weight_kg, temperature, date_added) VALUES ({id}, {record[1]}, {record[2]}, {record[3]}, {record[4]}, NOW());')
+                # recv = id, timestamp, hearthbeat, oxygen, weight_kg, temperatur, -
+                # index=  0,   1,          2,          3,        4,        5,       6
+                print(record)
+                cur.execute(f'INSERT INTO health_record (client_id, hearthbeat, oxygen, weight_kg, temperature, date_added) VALUES ({id}, {record[-4]}, {record[-3]}, {record[-2]}, {record[-1]}, NOW());')
                 con.commit()
 
                 cur.execute(f'DELETE FROM row_hd WHERE r_id = {record[0]};')

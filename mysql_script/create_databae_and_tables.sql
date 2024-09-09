@@ -1,3 +1,4 @@
+-- Active: 1719482876628@@127.0.0.1@3306
 CREATE DATABASE IF NOT EXISTS sql_personal_data;
 
 USE sql_personal_data;
@@ -21,7 +22,6 @@ CREATE TABLE IF NOT EXISTS health_record (
     weight_kg DECIMAL(5,2),
     temperature DECIMAL(5,2),
     date_added DATETIME NOT NULL,
-
     FOREIGN KEY (client_id) REFERENCES personal_data(client_id)
 );
 
