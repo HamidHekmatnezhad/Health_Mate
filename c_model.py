@@ -165,7 +165,7 @@ class FaceRec:
         # read row data
         if flag[1] == 0:
             # chenged row_hd  to log
-            cur.execute(f'SELECT * FROM log ORDER BY id DESC LIMIT 1;')
+            cur.execute(f'SELECT * FROM row_hd ORDER BY r_id DESC LIMIT 1;')
             record = cur.fetchone()
             # if record[1] and record[2] and record[3] and record[4]:
             if record:

@@ -247,6 +247,8 @@ def page_health_mate():
 
     elif (check_run == False):
         st.error('### NOT Found')
+    # ch = app.set_flag(0)    
+    
 
 def page_show_record():
     
