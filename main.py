@@ -270,9 +270,13 @@ def page_settings():
     st.write('in ***development***...')
 
 # region main
-option = st.selectbox('switch slide: ', list_of_tasks)
+option = list_of_tasks[0]
+option = st.segmented_control('switch slide: ', list_of_tasks)
 
-st.title(option.upper())
+try:
+    st.title(option.upper())
+except:
+    pass
 
 if option == list_of_tasks[0]:
     page_help()
