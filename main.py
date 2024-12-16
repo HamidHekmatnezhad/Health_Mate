@@ -8,10 +8,11 @@ from PIL import Image
 import face_recognition
 import random
 import matplotlib.pyplot as plt
+from texts import help_en, help_fr_html, footer_html, developers
 
 
-#                   0         1             2              3            4            5
-list_of_tasks = ['Help','Enrollment', 'Health Mate', 'Show Record', 'Settings', 'Edit Info']
+#                   0         1             2              3            4            5            6
+list_of_tasks = ['Help','Enrollment', 'Health Mate', 'Show Record', 'Settings', 'Edit Info', 'Developers']
 option = list_of_tasks[0]
 check_run, id, app = False, False, False
 heartbeat = []
@@ -163,8 +164,13 @@ def entry_optional():
             return app, 0, False
 
 def page_help():
-    st.write('in ***development***...')
-    
+    switch = st.radio('Language: ', ['English', 'Persian'])
+    if switch == 'English':
+        st.markdown(help_en)
+
+    elif switch == 'Persian':
+        st.html(help_fr_html)
+        
 def page_enrollment():
 
     id_p = st.number_input(label='ID', help='please enter id. example= 1234567890', value=0)
@@ -249,7 +255,6 @@ def page_health_mate():
         st.error('### NOT Found')
     # ch = app.set_flag(0)    
     
-
 def page_show_record():
     
     app, id, check_run = entry_optional()
@@ -296,4 +301,8 @@ elif option == list_of_tasks[4]:
 elif option == list_of_tasks[5]:
     edit_info_data()
 
+elif option == list_of_tasks[6]:
+    st.markdown(developers)
+    
+st.markdown(footer_html,unsafe_allow_html=True)
 # endregion
